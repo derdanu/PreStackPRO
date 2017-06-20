@@ -150,7 +150,7 @@
 	"sshKey": "no-key",
 	"authenticationType": "password",
 	"metadataNodeCount": 1,
-	"templateBaseUrl": "https://prestackpro.blob.core.windows.net/psp/",
+	"templateBaseUrl": "https://raw.githubusercontent.com/derdanu/PreStackPRO/master/",
     "ServerTemplate": "[concat(variables('templateBaseUrl'), 'EthernetServerRole-',variables('authenticationType'),'.Json')]",
     "ClientTemplate": "[concat(variables('templateBaseUrl'), 'EthernetClientRole-',variables('authenticationType'),'.Json')]",
      "networkSettings": {
