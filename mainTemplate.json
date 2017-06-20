@@ -240,7 +240,7 @@
           "sshKey": {
             "value": "[variables('sshKey')]"
           },
-          "existingSubnetResourceId": {
+          "subnetRef": {
             "value": "[parameters('existingSubnetResourceId')]"
           }          
         }
@@ -311,7 +311,7 @@
           "sshKey": {
             "value": "[variables('sshKey')]"
           },
-          "existingSubnetResourceId": {
+          "subnetRef": {
             "value": "[parameters('existingSubnetResourceId')]"
           }  
         }
