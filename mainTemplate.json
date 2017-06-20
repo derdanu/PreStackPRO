@@ -1,0 +1,390 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clustername": {
+      "type":"string",
+      "defaultValue": "pspcluster"
+    },
+    "serverCount": {
+      "minValue": 2,
+      "maxValue": 250,
+      "defaultValue": 2,
+      "type": "int" 
+    },
+	"ServerNodeSize": {
+		"type": "string",
+		"allowedValues": [
+		"Standard_D3",
+		"Standard_D4",
+		"Standard_D12",
+		"Standard_D13",
+		"Standard_D14",
+		"Standard_D3_v2",
+		"Standard_D4_v2",
+		"Standard_D5_v2",
+		"Standard_D12_v2",
+		"Standard_D13_v2",
+		"Standard_D14_v2",
+		"Standard_D15_v2",
+		"Standard_DS1",
+		"Standard_DS2",
+		"Standard_DS3",
+		"Standard_DS4",
+		"Standard_DS11",
+		"Standard_DS12",
+		"Standard_DS13",
+		"Standard_DS14",
+		"Standard_DS3_v2",
+		"Standard_DS4_v2",
+		"Standard_DS5_v2",
+		"Standard_DS12_v2",
+		"Standard_DS13_v2",
+		"Standard_DS14_v2",
+		"Standard_DS15_v2",
+		"Standard_G2",
+		"Standard_G3",
+		"Standard_G4",
+		"Standard_G5",
+		"Standard_GS2",
+		"Standard_GS3",
+		"Standard_GS4",
+		"Standard_GS5"
+		],
+		"defaultValue": "Standard_DS4",
+		"metadata": {
+			"description": "Size of the  node."
+		}
+	},    
+   "sizeOfDataDisksInGB": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Defines the size of each disk (premium storage sizes)"
+      }
+    },
+   "numDataDisksPerMachine": {
+	   "type": "string",
+	   "defaultValue": "4", 
+	   "allowedValues": [    
+		   "2",
+	   "3",
+	   "4",
+	   "5",
+	   "6",
+	   "7",
+	   "8",
+	   "9",
+	   "10",
+	   "11",
+	   "12",
+	   "13",
+	   "14",
+	   "15",
+	   "16"
+		   ],  
+	   "metadata": {
+		   "description": "This parameter allows the user to select the number of disks they want"
+	   }   
+   }, 
+    "adminUserName":{
+      "type": "string",
+      "defaultValue": "pspuser"
+    },
+	"adminPassword": {
+		"type":"securestring"
+	},
+	"clientCount": {
+		"minValue": 1,
+		"maxValue": 250,
+		"defaultValue": 1,
+		"type": "int" 
+	},
+	"ClientNodeSize": {
+		"type": "string", 
+		"allowedValues": [
+		"Standard_D3",
+		"Standard_D4",
+		"Standard_D12",
+		"Standard_D13",
+		"Standard_D14",
+		"Standard_D3_v2",
+		"Standard_D4_v2",
+		"Standard_D5_v2",
+		"Standard_D12_v2",
+		"Standard_D13_v2",
+		"Standard_D14_v2",
+		"Standard_D15_v2",
+		"Standard_DS1",
+		"Standard_DS2",
+		"Standard_DS3",
+		"Standard_DS4",
+		"Standard_DS11",
+		"Standard_DS12",
+		"Standard_DS13",
+		"Standard_DS14",
+		"Standard_DS3_v2",
+		"Standard_DS4_v2",
+		"Standard_DS5_v2",
+		"Standard_DS12_v2",
+		"Standard_DS13_v2",
+		"Standard_DS14_v2",
+		"Standard_DS15_v2",
+		"Standard_G2",
+		"Standard_G3",
+		"Standard_G4",
+		"Standard_G5",
+		"Standard_GS2",
+		"Standard_GS3",
+		"Standard_GS4",
+		"Standard_GS5"
+
+  	  ],
+      "defaultValue": "Standard_DS4",
+      "metadata": {
+        "description": "Size of the  node."
+      }
+    } 
+  },
+  "variables": {
+	"sshKey": "no-key",
+	"authenticationType": "password",
+	"metadataNodeCount": 1,
+	"templateBaseUrl": "https://prestackpro.blob.core.windows.net/psp/",
+    "ServerTemplate": "[concat(variables('templateBaseUrl'), 'EthernetServerRole-',variables('authenticationType'),'.Json')]",
+    "ClientTemplate": "[concat(variables('templateBaseUrl'), 'EthernetClientRole-',variables('authenticationType'),'.Json')]",
+     "networkSettings": {
+      "virtualNetworkName": "virtualnetwork",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/16",
+          "vnet": "virtualnetwork"
+        }
+      }
+     
+    },
+    "avSetNameServer": "[concat('avset-',uniqueString(resourceGroup().id), 'server') ]",
+    "avSetNameClient": "[concat('avset-',uniqueString(resourceGroup().id), 'client') ]"     
+  },
+  "resources": [
+  {
+	  "apiVersion": "2015-05-01-preview",
+	  "type": "Microsoft.Network/networkSecurityGroups",
+	  "name": "NSG",
+	  "location": "[resourceGroup().location]",
+	  "properties": {
+		  "securityRules": [
+		  {
+			  "name": "web_rule",
+			  "properties": {
+				  "description": "Allow WEB",
+				  "protocol": "Tcp",
+				  "sourcePortRange": "*",
+				  "destinationPortRange": "80",
+				  "sourceAddressPrefix": "Internet",
+				  "destinationAddressPrefix": "*",
+				  "access": "Allow",
+				  "priority": 101,
+				  "direction": "Inbound"
+			  }
+		  },
+
+		  {
+			  "name": "ssh_rule",
+			  "properties": {
+				  "description": "Allow SSH",
+				  "protocol": "Tcp",
+				  "sourcePortRange": "*",
+				  "destinationPortRange": "22",
+				  "sourceAddressPrefix": "Internet",
+				  "destinationAddressPrefix": "*",
+				  "access": "Allow",
+				  "priority": 100,
+				  "direction": "Inbound"
+			  }
+		  }
+		  ]
+	  }
+  },
+  {
+	  "apiVersion": "2015-06-15",
+	  "type": "Microsoft.Network/virtualNetworks",
+	  "name": "[variables('networkSettings').virtualNetworkName]",
+	  "location": "[resourceGroup().location]",     
+	  "dependsOn": [
+		  "['Microsoft.Network/networkSecurityGroups/NSG']"
+		  ],
+	  "properties": {
+		  "addressSpace": {
+			  "addressPrefixes": [
+				  "[variables('networkSettings').addressPrefix]"
+				  ]
+		  },
+		  "subnets": [
+		  {
+			  "name": "[variables('networkSettings').subnet.dse.name]",
+			  "properties": {
+				  "addressPrefix": "[variables('networkSettings').subnet.dse.prefix]",
+				  "networkSecurityGroup": {
+					  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG')]"
+				  }
+			  }
+		  }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameServer') ]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+     {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameClient') ]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('beegfs-', 'server', '-vm-', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+       "dependsOn": [
+         "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]",
+          "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameServer'))]"        
+       ], 
+      "copy": { 
+          "name": "serverloop", 
+          "count": "[parameters('serverCount')]" 
+        },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ServerTemplate')]",
+          "contentVersion": "1.0.0.0"
+        },                
+        "parameters": {
+          "installationCLI" : {
+            "value": "[concat('sh setup_beegfs_server.sh /mnt/raid /mnt/parallel 10.0.2.1 ',copyIndex(1) ,' ', parameters('adminUserName') ,' ', parameters('adminPassword') )]"
+          },
+          "roleType" :{
+            "value": "server"
+          },
+          "instanceNumber" : {
+            "value":"[copyIndex(1)]"
+          },         
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "imagePublisher": {
+            "value": "Canonical"
+          },
+          "imageOffer": {
+            "value": "UbuntuServer"
+          },
+          "imageSku": {
+            "value": "16.04.0-LTS"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mountFolder": {
+            "value": "/data"
+          },
+          "nodeSize": {
+            "value": "[parameters('ServerNodeSize')]"
+          },
+          "storageType": {
+            "value": "Premium_LRS"
+          },          
+          "dataDiskSize": {
+            "value": "[parameters('sizeOfDataDisksInGB')]"
+          },
+          "masterVMName": {
+            "value": "[concat(parameters('clustername'))]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisksPerMachine')]"
+          },
+          "sshKey": {
+            "value": "[variables('sshKey')]"
+          }
+        }
+      }
+    }
+
+,
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('beegfs-', 'client', '-vm-', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+       "dependsOn": [
+         "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]",         
+          "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameClient'))]"        
+       ], 
+      "copy": { 
+          "name": "clientloop", 
+          "count": "[parameters('clientCount')]" 
+        },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ClientTemplate')]",
+          "contentVersion": "1.0.0.0"
+        },                
+        "parameters": {
+          "installationCLI" : {
+            "value": "[concat('sh setup_beegfs_client.sh /mnt/parallel 10.0.2.1 ' , parameters('adminUserName') ,' ', parameters('adminPassword'))]"
+          },
+          "roleType" :{
+            "value": "client"
+          },
+          "instanceNumber" : {
+            "value":"[copyIndex(1)]"
+          },         
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "imagePublisher": {
+            "value": "Canonical"
+          },
+          "imageOffer": {
+            "value": "UbuntuServer"
+          },
+          "imageSku": {
+            "value": "16.04.0-LTS"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mountFolder": {
+            "value": "/data"
+          },
+          "nodeSize": {
+            "value": "[parameters('ClientNodeSize')]"
+          },
+          "storageType": {
+            "value": "Premium_LRS"
+          },          
+          "dataDiskSize": {
+            "value": 10
+          },
+          "masterVMName": {
+            "value": "[concat(parameters('clustername'))]"
+          },
+          "numDataDisks": {
+            "value": "1"
+          },
+          "sshKey": {
+            "value": "[variables('sshKey')]"
+          }
+        }
+      }
+    }
+
+  ]
+}
