@@ -144,7 +144,13 @@
       "metadata": {
         "description": "Size of the  node."
       }
-    } 
+    },
+    "existingSubnetResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the existing subnet to deploy the scale set into. Should be of the form: /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP/providers/Microsoft.Network/virtualNetworks/YOUR_VNET_NAME/subnets/YOUR_SUBNET_NAME"
+      }
+    }
   },
   "variables": {
 	"sshKey": "no-key",
@@ -153,43 +159,10 @@
 	"templateBaseUrl": "https://raw.githubusercontent.com/derdanu/PreStackPRO/master/",
     "ServerTemplate": "[concat(variables('templateBaseUrl'), 'EthernetServerRole-',variables('authenticationType'),'.Json')]",
     "ClientTemplate": "[concat(variables('templateBaseUrl'), 'EthernetClientRole-',variables('authenticationType'),'.Json')]",
-     "networkSettings": {
-      "virtualNetworkName": "virtualnetwork",
-      "addressPrefix": "10.0.0.0/16",
-      "subnet": {
-        "dse": {
-          "name": "dse",
-          "prefix": "10.0.0.0/16",
-          "vnet": "virtualnetwork"
-        }
-      }
-     
-    },
     "avSetNameServer": "[concat('avset-',uniqueString(resourceGroup().id), 'server') ]",
     "avSetNameClient": "[concat('avset-',uniqueString(resourceGroup().id), 'client') ]"     
   },
   "resources": [
-  {
-	  "apiVersion": "2015-06-15",
-	  "type": "Microsoft.Network/virtualNetworks",
-	  "name": "[variables('networkSettings').virtualNetworkName]",
-	  "location": "[resourceGroup().location]",     
-	  "properties": {
-		  "addressSpace": {
-			  "addressPrefixes": [
-				  "[variables('networkSettings').addressPrefix]"
-				  ]
-		  },
-		  "subnets": [
-		  {
-			  "name": "[variables('networkSettings').subnet.dse.name]",
-			  "properties": {
-				  "addressPrefix": "[variables('networkSettings').subnet.dse.prefix]"
-			  }
-		  }
-        ]
-      }
-    },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameServer') ]",
@@ -209,7 +182,6 @@
       "name": "[concat('beegfs-', 'server', '-vm-', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
        "dependsOn": [
-         "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]",
           "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameServer'))]"        
        ], 
       "copy": { 
@@ -267,7 +239,10 @@
           },
           "sshKey": {
             "value": "[variables('sshKey')]"
-          }
+          },
+          "existingSubnetResourceId": {
+            "value": "[parameters('existingSubnetResourceId')]"
+          }          
         }
       }
     }
@@ -278,7 +253,6 @@
       "name": "[concat('beegfs-', 'client', '-vm-', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
        "dependsOn": [
-         "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]",         
           "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameClient'))]"        
        ], 
       "copy": { 
@@ -336,7 +310,10 @@
           },
           "sshKey": {
             "value": "[variables('sshKey')]"
-          }
+          },
+          "existingSubnetResourceId": {
+            "value": "[parameters('existingSubnetResourceId')]"
+          }  
         }
       }
     }
