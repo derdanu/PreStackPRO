@@ -174,9 +174,6 @@
 	  "type": "Microsoft.Network/virtualNetworks",
 	  "name": "[variables('networkSettings').virtualNetworkName]",
 	  "location": "[resourceGroup().location]",     
-	  "dependsOn": [
-		  "['Microsoft.Network/networkSecurityGroups/NSG']"
-		  ],
 	  "properties": {
 		  "addressSpace": {
 			  "addressPrefixes": [
