@@ -3,8 +3,8 @@ PreStackPRO on Azure - Custom
 
 ## Customized Items
 
-* Removed all Public IP Adresses
-
+* Removed all Public IP Addresses
+* Removed Network Security Group
 
 ## Create the cluster on the Azure Portal
 
