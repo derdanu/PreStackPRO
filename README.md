@@ -6,6 +6,7 @@ PreStackPRO on Azure - Custom
 * Removed all Public IP Addresses
 * Removed Network Security Group
 * Removed Virtual Network
+* Removed Custom Script Extension
 * Added Parameter to use existing subnet
 
 ## Create the cluster on the Azure Portal

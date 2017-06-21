@@ -195,9 +195,6 @@
           "contentVersion": "1.0.0.0"
         },                
         "parameters": {
-          "installationCLI" : {
-            "value": "[concat('sh setup_beegfs_server.sh /mnt/raid /mnt/parallel 10.0.2.1 ',copyIndex(1) ,' ', parameters('adminUserName') ,' ', parameters('adminPassword') )]"
-          },
           "roleType" :{
             "value": "server"
           },
@@ -218,9 +215,6 @@
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
-          },
-          "mountFolder": {
-            "value": "/data"
           },
           "nodeSize": {
             "value": "[parameters('ServerNodeSize')]"
@@ -266,9 +260,6 @@
           "contentVersion": "1.0.0.0"
         },                
         "parameters": {
-          "installationCLI" : {
-            "value": "[concat('sh setup_beegfs_client.sh /mnt/parallel 10.0.2.1 ' , parameters('adminUserName') ,' ', parameters('adminPassword'))]"
-          },
           "roleType" :{
             "value": "client"
           },
@@ -289,9 +280,6 @@
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
-          },
-          "mountFolder": {
-            "value": "/data"
           },
           "nodeSize": {
             "value": "[parameters('ClientNodeSize')]"
